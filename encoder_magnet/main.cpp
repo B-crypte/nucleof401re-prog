@@ -27,7 +27,7 @@ Ticker CheckEnc;
 
 //global 
 int cnt;      //count
-bool dir;
+unsigned char dir;
 unsigned char current;   //記憶値
 
 //initiarize AD5040 otp program
@@ -88,13 +88,17 @@ void interval_timerw(void){
     if(current != PD){
         pd = funcD(current,PD);
         if(pd>=2){
-            dir = true;
+            dir = 1;
             cnt++;
         }else{
-            dir = false;
+            dir = 0;
             cnt--;
         }
     }
+}
+//
+void cul_rpm(void){
+    int deff_cnt;
 }
 //main func.
 int main(){
@@ -105,6 +109,6 @@ int main(){
     //main
     while (1) {
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("cnt:%4d,dir:%2d\n\e[2A",cnt,dir);
+        printf("cnt:%6d\ndir:%2d\n\e[3A",cnt,dir);
     }
 }
