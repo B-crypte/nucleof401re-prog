@@ -72,7 +72,7 @@ void Acounter(){
 void Bcounter(){
     cntB++;
 }
-//
+//main func.
 int main()
 {
     cntA = cntB = 0;
