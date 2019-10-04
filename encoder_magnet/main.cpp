@@ -1,10 +1,10 @@
 #include "mbed.h"
 
-#define CCW 0           //clockwise operation (1bit;0:cw,1:ccw)
-#define ZEROPOS 0x00    //programmed zero position (10bit)
-#define INDEX 0         //index bit width (1bit)
-#define DIVX 0x0        //incremental resolution (2bit;mode_10bit,mode_7bit,mode_5bit)
-#define MDX  0x0        //incremental mode (2bit;m1:quadrature,m2:step/dir,m3:motor)
+#define CCW 0               //clockwise operation (1bit;0:cw,1:ccw)
+#define ZEROPOS 0x00        //programmed zero position (10bit)
+#define INDEX 0             //index bit width (1bit)
+#define DIVX 0x0            //incremental resolution (2bit;mode_10bit,mode_7bit,mode_5bit)
+#define MDX  0x0            //incremental mode (2bit;m1:quadrature,m2:step/dir,m3:motor)
 
 DigitalOut CS(PB_10);       //chip select
 DigitalOut Prog(PB_15);     //otp program(mode set)
@@ -16,19 +16,22 @@ InterruptIn Aline(PA_8,PullUp);   //quadrature A phase
 InterruptIn Bline(PA_9,PullUp);   //quadrature B phase
 //InterruptIn LSB(PA_8,PullUp);   //step/dir mode Least Sign Bit
 //DigitalIn Dir(PA_9);            //direction of rotation
-//DigitalIn Mt_U(PA_8,PullUp);  //U sign(pahse1)
-//DigitalIn Mt_V(PA_9,PullUp);  //V sign(phase2)
-DigitalIn DO(PA_10);            //Data Output Serial interface
-DigitalIn PWM_LSB(PB_5);        //PWM LSB in mode3
+//DigitalIn Mt_U(PA_8,PullUp);    //U sign(pahse1)
+//DigitalIn Mt_V(PA_9,PullUp);    //V sign(phase2)
+DigitalIn DO(PA_10);              //Data Output Serial interface
+DigitalIn PWM_LSB(PB_5);          //PWM LSB in mode3
 
 InterruptIn Index_w(PC_7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
 
+Ticker CheckEnc;
+
 //global 
-int cntA,cntB;  //count
+int cnt;      //count
+bool dir;
+unsigned char current;   //記憶値
 
 //initiarize AD5040 otp program
-void init_dev()
-{
+void init_dev(){
     static short wt_da[16];
     int zdata = ZEROPOS;
     //書き込みデータ準備
@@ -62,29 +65,46 @@ void init_dev()
 }
 //counter reset to 0
 void Reset_cnt(){
-    cntA = 0;
-    cntB = 0;
+    cnt = 0;
 }
-//encoder rotation dir in quadrature mode
-void Acounter(){
-    cntA++;
+//エンコーダ　回転方向判別関数
+unsigned char funcD(unsigned char ft0,unsigned char ft1){
+    unsigned char result;
+
+    current = ft1;      //現在値を記録
+    ft0 <<=  0x01;      //前の状態値を左シフト
+    ft0 &= 0x03;        //下位2bit マスク
+    ft1 &= 0x03;        //下位2bit マスク
+    result = (ft0 + ft1) & 0x03;    //判別結果をマスク
+
+    return result;      //1：右回転，2：左回転
 }
-void Bcounter(){
-    cntB++;
+//タイマー割り込みによるエンコーダの検出
+void interval_timerw(void){
+    unsigned char pd;   //回転判別結果
+    unsigned char PD;   //現在値
+
+    PD = Aline + (Bline<<1);
+    if(current != PD){
+        pd = funcD(current,PD);
+        if(pd>=2){
+            dir = true;
+            cnt++;
+        }else{
+            dir = false;
+            cnt--;
+        }
+    }
 }
 //main func.
-int main()
-{
-    cntA = cntB = 0;
-    //init device
-    //init_dev();
+int main(){
     //interrupt
     Index_w.rise(Reset_cnt);
-    Aline.rise(Acounter);
-    Bline.rise(Bcounter);
+    //coutinuce timer
+    CheckEnc.attach_us(&interval_timerw, 100);
     //main
     while (1) {
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("cntA:%4d,cntB:%4d\n\e[2A",cntA,cntB);
+        printf("cnt:%4d,dir:%2d\n\e[2A",cnt,dir);
     }
 }
