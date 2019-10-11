@@ -6,24 +6,30 @@
 #define DIVX 0x0            //incremental resolution (2bit;mode_10bit,mode_7bit,mode_5bit)
 #define MDX  0x0            //incremental mode (2bit;m1:quadrature,m2:step/dir,m3:motor)
 
-DigitalOut CS(PB_10,PullUp); //chip select
-DigitalOut Prog(PB_15);      //otp program(mode set)
-DigitalOut CLK(PB_4);        //clock(trigger input)
-DigitalIn MagINC(PA_12,PullUp);    //magnitude increase
-DigitalIn MagDEC(PA_11,PullUp);    //magnitude decrease
+DigitalOut CS(PB_10);       //chip select
+DigitalOut Prog(PB_15);     //otp program(mode set)
+DigitalOut CLK(PB_4);       //clock(trigger input)
+DigitalIn MagINC(PA_12);    //magnitude increase
+DigitalIn MagDEC(PA_11);    //magnitude decrease
 //MDxの定義で変更
 InterruptIn Aline(PA_8,PullUp);   //quadrature A phase
 InterruptIn Bline(PA_9,PullUp);   //quadrature B phase
+//InterruptIn LSB(PA_8,PullUp);   //step/dir mode Least Sign Bit
+//DigitalIn Dir(PA_9);            //direction of rotation
+//DigitalIn Mt_U(PA_8,PullUp);    //U sign(pahse1)
+//DigitalIn Mt_V(PA_9,PullUp);    //V sign(phase2)
 DigitalIn DO(PA_10);              //Data Output Serial interface
 DigitalIn PWM_LSB(PB_5);          //PWM LSB in mode3
 
 InterruptIn Index_w(PC_7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
+
 Ticker CheckEnc;
 
 //global 
-int cnt;  //count
-unsigned char dir;       //
+int cnt;      //count
+bool dir;
 unsigned char current;   //記憶値
+
 //initiarize AD5040 otp program
 void init_dev(){
     static short wt_da[16];
@@ -59,7 +65,7 @@ void init_dev(){
 }
 //counter reset to 0
 void Reset_cnt(){
-   cnt = 0;
+    cnt = 0;
 }
 //エンコーダ　回転方向判別関数
 unsigned char funcD(unsigned char ft0,unsigned char ft1){
@@ -82,10 +88,10 @@ void interval_timerw(void){
     if(current != PD){
         pd = funcD(current,PD);
         if(pd>=2){
-            dir = 1;
+            dir = true;
             cnt++;
         }else{
-            dir = 0;
+            dir = false;
             cnt--;
         }
     }
@@ -99,6 +105,6 @@ int main(){
     //main
     while (1) {
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("cnt:%6d\ndir:%2d\n\e[3A",cnt,dir);
+        printf("cnt:%4d,dir:%2d\n\e[2A",cnt,dir);
     }
 }
