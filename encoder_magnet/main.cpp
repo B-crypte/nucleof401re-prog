@@ -6,18 +6,14 @@
 #define DIVX 0x0            //incremental resolution (2bit;mode_10bit,mode_7bit,mode_5bit)
 #define MDX  0x0            //incremental mode (2bit;m1:quadrature,m2:step/dir,m3:motor)
 
-DigitalOut CS(PB_10,PullUp);       //chip select
-DigitalOut Prog(PB_15);     //otp program(mode set)
-DigitalOut CLK(PB_4);       //clock(trigger input)
+DigitalOut CS(PB_10,PullUp); //chip select
+DigitalOut Prog(PB_15);      //otp program(mode set)
+DigitalOut CLK(PB_4);        //clock(trigger input)
 DigitalIn MagINC(PA_12,PullUp);    //magnitude increase
 DigitalIn MagDEC(PA_11,PullUp);    //magnitude decrease
 //MDxの定義で変更
-DigitalIn Aline(PA_8);   //quadrature A phase
-DigitalIn Bline(PA_9);   //quadrature B phase
-//InterruptIn LSB(PA_8,PullUp);   //step/dir mode Least Sign Bit
-//DigitalIn Dir(PA_9);            //direction of rotation
-//DigitalIn Mt_U(PA_8,PullUp);    //U sign(pahse1)
-//DigitalIn Mt_V(PA_9,PullUp);    //V sign(phase2)
+InterruptIn Aline(PA_8,PullUp);   //quadrature A phase
+InterruptIn Bline(PA_9,PullUp);   //quadrature B phase
 DigitalIn DO(PA_10);              //Data Output Serial interface
 DigitalIn PWM_LSB(PB_5);          //PWM LSB in mode3
 
@@ -25,10 +21,9 @@ InterruptIn Index_w(PC_7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
 Ticker CheckEnc;
 
 //global 
-int cnt;      //count
-unsigned char dir;
+int cnt;  //count
+unsigned char dir;       //
 unsigned char current;   //記憶値
-
 //initiarize AD5040 otp program
 void init_dev(){
     static short wt_da[16];
@@ -95,11 +90,6 @@ void interval_timerw(void){
         }
     }
 }
-//回転速度の計算
-void cul_rpm(void){
-    int deff_cnt;
-}
-
 //main func.
 int main(){
     //interrupt
@@ -109,7 +99,6 @@ int main(){
     //main
     while (1) {
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        //printf("cnt:%6d\ndir:%2d\n\e[3A",cnt,dir);
-        printf("A %d,B %d\n\e[3A",(int)Aline,(int)Bline);
+        printf("cnt:%6d\ndir:%2d\n\e[3A",cnt,dir);
     }
 }
