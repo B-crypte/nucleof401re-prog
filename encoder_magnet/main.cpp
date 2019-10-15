@@ -28,18 +28,14 @@ int cnt;      //count
 bool dir;
 unsigned char current;   //記憶値
 
-//counter reset to 0
-void Reset_cnt(){
-    cnt = 0;
-}
-
 //main func.
 int main(){
-    //interrupt Z phase
-    Index_w.rise(Reset_cnt);
+    int buf;
+    //エンコーダの初期化
     init_enc();
-    //main
+    //roop
     while (1) {
+        getcnt_enc(&cnt,&buf);
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
         printf("cnt:%4d,dir:%2d\n\e[2A",cnt,dir);
     }
