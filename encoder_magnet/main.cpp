@@ -6,22 +6,22 @@
 #define DIVX 0x0            //incremental resolution (2bit;mode_10bit,mode_7bit,mode_5bit)
 #define MDX  0x0            //incremental mode (2bit;m1:quadrature,m2:step/dir,m3:motor)
 
-DigitalOut CS(PB_10);       //chip select
+DigitalOut CS(D6);          //chip select
 DigitalOut Prog(PB_15);     //otp program(mode set)
-DigitalOut CLK(PB_4);       //clock(trigger input)
+DigitalOut CLK(D5);         //clock(trigger input)
 DigitalIn MagINC(PA_12);    //magnitude increase
 DigitalIn MagDEC(PA_11);    //magnitude decrease
 //MDxの定義で変更
-InterruptIn Aline(PA_8,PullUp);   //quadrature A phase
-InterruptIn Bline(PA_9,PullUp);   //quadrature B phase
-//InterruptIn LSB(PA_8,PullUp);   //step/dir mode Least Sign Bit
-//DigitalIn Dir(PA_9);            //direction of rotation
-//DigitalIn Mt_U(PA_8,PullUp);    //U sign(pahse1)
-//DigitalIn Mt_V(PA_9,PullUp);    //V sign(phase2)
-DigitalIn DO(PA_10);              //Data Output Serial interface
-DigitalIn PWM_LSB(PB_5);          //PWM LSB in mode3
+InterruptIn Aline(D9,PullUp);   //quadrature A phase
+InterruptIn Bline(D8,PullUp);   //quadrature B phase
+//InterruptIn LSB(PA_8,PullUp); //step/dir mode Least Sign Bit
+//DigitalIn Dir(PA_9);          //direction of rotation
+//DigitalIn Mt_U(PA_8,PullUp);  //U sign(pahse1)
+//DigitalIn Mt_V(PA_9,PullUp);  //V sign(phase2)
+DigitalIn DO(D4);               //Data Output Serial interface
+DigitalIn PWM_LSB(D2);          //PWM LSB in mode3
 
-InterruptIn Index_w(PC_7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
+InterruptIn Index_w(D7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
 
 Ticker CheckEnc;
 
@@ -93,6 +93,9 @@ void interval_timerw(void){
         }else{
             dir = false;
             cnt--;
+            if(cnt < 0){
+                cnt = 1023;
+            }
         }
     }
 }
