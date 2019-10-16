@@ -5,16 +5,32 @@
 InterruptIn Ena(D9,PullUp);   //quadrature A phase
 InterruptIn Enb(D8,PullUp);   //quadrature B phase
 
+InterruptIn Index_w(D7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
+Ticker Mesu_encoder;
+
+//MDxの定義で変更
+//InterruptIn LSB(PA_8,PullUp); //step/dir mode Least Sign Bit
+//DigitalIn Dir(PA_9);          //direction of rotation
+//DigitalIn Mt_U(PA_8,PullUp);  //U sign(pahse1)
+//DigitalIn Mt_V(PA_9,PullUp);  //V sign(phase2)
+DigitalIn DO(D4);               //Data Output Serial interface
+DigitalIn PWM_LSB(D2);          //PWM LSB in mode3
+DigitalOut CS(D6);              //chip select
+DigitalOut Prog(PB_15);         //otp program(mode set)
+DigitalOut CLK(D5);          //clock(trigger input)
+
 //エンコーダカウンタ
 volatile static int enc_count;   //現在の値
 volatile static int old_count;   //enc_count更新前の値を保持
 static int dir;
+static float rot_rpm;
 
 //カウンタ初期化
 int init_enc(void){
     enc_count = 0;
     old_count = 0;
     dir = 0;
+    rot_rpm = 0;
 
     Ena.rise(&encoder_a_cnter);   //A相立ち上がり
     Enb.rise(&encoder_b_cnter);   //B相立ち上がり
@@ -80,7 +96,29 @@ int setcnt_enc(int set){
 int readcnt_enc(void){
     return enc_count;
 }
-//
-int encoder_dir(void){
+//回転方向の外部参照関数
+int get_rot_dir(void){
     return dir;
+}
+//回転速度の計測開始
+void rot_speed_chk_start(){
+    enc_count = 0;
+    old_count = 0;
+    Mesu_encoder.attach(&mesu_rot_speed, 0.01);
+}
+//回転速度の測定
+void mesu_rot_speed(){
+    int pre_cnt = enc_count - old_count;
+    float pre_spd;
+    
+    //current_spd[rad/s]
+    pre_spd  = pre_cnt*(((2.0*PI)/1024.0)/0.01);
+    //RPMに変換[rpm]
+    rot_rpm = pre_spd * 60.0 / (2.0*PI);
+    //現在のカウント値を記録
+    old_count = enc_count;   
+}
+//現在の回転速度を取得
+float get_rot_spd(){
+   return  rot_rpm;
 }
