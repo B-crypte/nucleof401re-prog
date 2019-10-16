@@ -1,5 +1,6 @@
 #include "mbed.h"
 #include "encoder_control.h"
+#include "motor_control.h"
 
 #define CCW 0               //clockwise operation (1bit;0:cw,1:ccw)
 #define ZEROPOS 0x00        //programmed zero position (10bit)
@@ -9,34 +10,39 @@
 
 DigitalIn MagINC(PA_12);    //magnitude increase
 DigitalIn MagDEC(PA_11);    //magnitude decrease
-
-DigitalOut CS(D6);          //chip select
-DigitalOut Prog(PB_15);     //otp program(mode set)
-DigitalOut CLK(D5);         //clock(trigger input)
-//MDxの定義で変更
-//InterruptIn LSB(PA_8,PullUp); //step/dir mode Least Sign Bit
-//DigitalIn Dir(PA_9);          //direction of rotation
-//DigitalIn Mt_U(PA_8,PullUp);  //U sign(pahse1)
-//DigitalIn Mt_V(PA_9,PullUp);  //V sign(phase2)
-DigitalIn DO(D4);               //Data Output Serial interface
-DigitalIn PWM_LSB(D2);          //PWM LSB in mode3
-
-InterruptIn Index_w(D7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
+InterruptIn b1(USER_BUTTON);
 
 //global 
 int cnt;      //count
 bool dir;
 unsigned char current;   //記憶値
 
+//test moter
+void motor_tgl(void){
+    if(readstate_mtr(0)==1.0){
+        rot_speed_chk_start();
+        write_pwm_mtr(0,0.95);   //低速回転
+    }else{
+        write_pwm_mtr(0,1.0);   //停止
+    }
+}
+
 //main func.
 int main(){
     int buf;
-    //エンコーダの初期化
-    init_enc();
+    float rpm;
+    //初期化シーケンス
+    init_enc(); //エンコーダIC
+    init_mtr(); //モータドライバIC
+    //モータ動作確認
+    b1.rise(&motor_tgl);
     //roop
     while (1) {
         getcnt_enc(&cnt,&buf);
+        dir = get_rot_dir();
+        rpm = get_rot_spd();
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("cnt:%4d,dir:%2d\n\e[2A",cnt,dir);
+        printf("rpm:%.1f,dir:%2d\n",rpm,dir); 
+        printf("cnt:%4d\n\e[3A",cnt);
     }
 }
