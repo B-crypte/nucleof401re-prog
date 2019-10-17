@@ -7,6 +7,7 @@ InterruptIn Enb(D8,PullUp);   //quadrature B phase
 
 InterruptIn Index_w(D7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
 Ticker Mesu_encoder;
+Timer rot_t1;
 
 //MDxの定義で変更
 //InterruptIn LSB(PA_8,PullUp); //step/dir mode Least Sign Bit
@@ -17,25 +18,30 @@ DigitalIn DO(D4);               //Data Output Serial interface
 DigitalIn PWM_LSB(D2);          //PWM LSB in mode3
 DigitalOut CS(D6);              //chip select
 DigitalOut Prog(PB_15);         //otp program(mode set)
-DigitalOut CLK(D5);          //clock(trigger input)
+DigitalOut CLK(D5);             //clock(trigger input)
 
-//エンコーダカウンタ
-volatile static int enc_count;   //現在の値
-volatile static int old_count;   //enc_count更新前の値を保持
-static int dir;
-static float rot_rpm;
+//エンコーダカウンタ(のちに構造化することも考慮)
+volatile static int enc_count;  //現在の値
+volatile static int old_count;  //enc_count更新前の値を保持
+volatile static int timecnt;    //1回転した回数をカウント
+static long total_interval;      //回転にかかる時間の合計
+static float ave_interval;      //1回転あたりの平均時間（回転周期）
+static int rot_dir;             //回転方向
+static float pre_spd;
 
 //カウンタ初期化
 int init_enc(void){
     enc_count = 0;
     old_count = 0;
-    dir = 0;
-    rot_rpm = 0;
+    rot_dir = 0;
+    total_interval = 0;
+    ave_interval = 0.0;
 
     Ena.rise(&encoder_a_cnter);   //A相立ち上がり
     Enb.rise(&encoder_b_cnter);   //B相立ち上がり
     Ena.fall(&encoder_a_cnter);   //A相立ち下がり
     Enb.fall(&encoder_b_cnter);   //B相立ち下がり
+    Index_w.rise(&mesu_rot_interval);   //Z相立ち上がり
     return 0;
 }
 //カウントアップ
@@ -52,10 +58,10 @@ void encoder_a_cnter(void){
 
     if(rot == 1){   //正転
         enc_count++;      //カウントInc
-        dir = 0;
+        rot_dir = 0;
     }else{          //逆転
         enc_count--;      //カウントDec
-        dir = 1;
+        rot_dir = 1;
     }
     if(enc_count == ENCODER_CPR) { //カウント範囲の補正
         //enc_count = 0;
@@ -63,14 +69,14 @@ void encoder_a_cnter(void){
 }
 //B相　割り込み
 void encoder_b_cnter(void){
-    short rot = Ena^Enb;      //回転方向
+    short rot = Ena^Enb;  //回転方向
 
     if(rot == 1){   //逆転
         enc_count--;      //カウントDec
-        dir = 1;
+        rot_dir = 1;
     }else{          //正転
         enc_count++;      //カウントInc
-        dir = 0;
+        rot_dir = 0;
     }
     if(enc_count == ENCODER_CPR) { //カウント範囲の補正
         //enc_count = 0;
@@ -97,28 +103,47 @@ int readcnt_enc(void){
     return enc_count;
 }
 //回転方向の外部参照関数
-int get_rot_dir(void){
-    return dir;
+int read_rot_dir(void){
+    return rot_dir;
 }
-//回転速度の計測開始
-void rot_speed_chk_start(){
+//エンコーダカウントのリセット
+void reset_enc_cnt(){
     enc_count = 0;
     old_count = 0;
-    Mesu_encoder.attach(&mesu_rot_speed, 0.01);
 }
 //回転速度の測定
-void mesu_rot_speed(){
+float mesu_rot_speed(){
     int pre_cnt = enc_count - old_count;
-    float pre_spd;
     
     //current_spd[rad/s]
     pre_spd  = pre_cnt*(((2.0*PI)/1024.0)/0.01);
-    //RPMに変換[rpm]
-    rot_rpm = pre_spd * 60.0 / (2.0*PI);
     //現在のカウント値を記録
-    old_count = enc_count;   
+    old_count = enc_count;
+
+    return pre_spd;
 }
 //現在の回転速度を取得
-float get_rot_spd(){
-   return  rot_rpm;
+float read_rot_spd(){
+    //回転速度[rpm]
+    float rot_rpm = pre_spd * 60.0 / (2.0*PI); 
+    if(rot_rpm<0){
+        return  rot_rpm*(-1);
+    }else{
+        return  rot_rpm;
+    }
+}
+//indexw端子を使った回転周期の測定
+void mesu_rot_interval(void){
+    timecnt++;
+    if(timecnt==10){
+        rot_t1.stop();
+        timecnt=0;
+        ave_interval = rot_t1.read_ms()/10.0;
+        rot_t1.reset();
+        rot_t1.start();
+    }
+}
+//10回平均した回転周期の値読み取り関数
+float read_rot_interval(void){
+    return ave_interval;
 }
