@@ -24,7 +24,6 @@ DigitalOut CLK(D5);             //clock(trigger input)
 volatile static int enc_count;  //現在の値
 volatile static int old_count;  //enc_count更新前の値を保持
 volatile static int timecnt;    //1回転した回数をカウント
-static long total_interval;      //回転にかかる時間の合計
 static float ave_interval;      //1回転あたりの平均時間（回転周期）
 static int rot_dir;             //回転方向
 static float pre_spd;
@@ -34,7 +33,6 @@ int init_enc(void){
     enc_count = 0;
     old_count = 0;
     rot_dir = 0;
-    total_interval = 0;
     ave_interval = 0.0;
 
     Ena.rise(&encoder_a_cnter);   //A相立ち上がり
@@ -43,13 +41,6 @@ int init_enc(void){
     Enb.fall(&encoder_b_cnter);   //B相立ち下がり
     Index_w.rise(&mesu_rot_interval);   //Z相立ち上がり
     return 0;
-}
-//カウントアップ
-void cntUP_enc(void){
-    enc_count++;
-    if(enc_count == ENCODER_CPR) {
-        //enc_count = 0;
-    }
 }
 //A相　割り込み
 void encoder_a_cnter(void){

@@ -29,3 +29,4 @@ float read_rot_spd();
 // 100回平均した回転周期の値読み取り関数
 float read_rot_interval(void);
 void mesu_rot_interval(void);
+void cancel_limit();
