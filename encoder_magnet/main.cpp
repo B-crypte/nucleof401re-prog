@@ -19,11 +19,11 @@ unsigned char current;   //記憶値
 
 //test moter
 void motor_tgl(void){
-    if(readstate_mtr(0)==1.0){
-        rot_speed_chk_start();
-        write_pwm_mtr(0,0.95);   //低速回転
+    if(readstate_mtr(1)==1.0){
+        start_mtr();
     }else{
-        write_pwm_mtr(0,1.0);   //停止
+        stop_mtr();   //停止
+        write_pwm_mtr(1,1.0);
     }
 }
 
@@ -31,18 +31,24 @@ void motor_tgl(void){
 int main(){
     int buf;
     float rpm;
+    float interval;
+    float prirpm;
+    float rto;
+
     //初期化シーケンス
     init_enc(); //エンコーダIC
     init_mtr(); //モータドライバIC
-    //モータ動作確認
+    //モータ制御確認
     b1.rise(&motor_tgl);
     //roop
     while (1) {
         getcnt_enc(&cnt,&buf);
-        dir = get_rot_dir();
-        rpm = get_rot_spd();
+        dir = read_rot_dir();
+        rpm = read_rot_spd();
+        rto = read_ratio();
+        interval = read_rot_interval();
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("rpm:%.1f,dir:%2d\n",rpm,dir); 
-        printf("cnt:%4d\n\e[3A",cnt);
+        printf("rpm:%4.2f,interval:%4.2f,dir:%2d\n",rpm,interval,dir); 
+        printf("r:%.2lf cnt:%4d\n\e[3A",rto,cnt);
     }
 }
