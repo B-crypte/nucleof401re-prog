@@ -91,7 +91,7 @@ void motor_pid(void)
     getcnt_enc(&now_cnt,&old);
     setcnt_enc(0);
     //角速度の計算[rad/s]
-    now_omega = now_cnt * (((2.0*PI)/1920.0)/dT);
+    now_omega = now_cnt * (((2.0*PI)/1024.0)/dT);
     read_omega = now_omega;
     //偏差:目標値3.14[rad/s]
     en = (mtr_spd) - now_omega;  
