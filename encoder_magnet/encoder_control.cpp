@@ -107,10 +107,9 @@ float mesu_rot_speed(){
     int pre_cnt = enc_count - old_count;
     
     //current_spd[rad/s]
-    pre_spd  = pre_cnt*(((2.0*PI)/1024.0)/0.01);
+    pre_spd  = pre_cnt*(((2.0f*PI)/1024.0f)/0.01f);
     //現在のカウント値を記録
     old_count = enc_count;
-
     return pre_spd;
 }
 //現在の回転速度を取得

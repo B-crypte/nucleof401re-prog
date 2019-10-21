@@ -11,7 +11,7 @@ static float en2 = 0;
 static float MVn = 0;
 static float pre_omega = 0.0;
 static float ratio = 0;
-static float mtr_spd = 3.12*2*5; //[rad/s]
+static float mtr_spd = 3.12*2*10; //[rad/s]
 
 //初期化
 void init_mtr(void)
@@ -25,12 +25,6 @@ void init_mtr(void)
     Mt2.write(1);
     Mt1.period_ms(1);
     Mt2.period_ms(1);
-}
-//リミット解除
-void cancel_limit(){
-    Mt1.write(0.0f);
-    Mt2.write(0.0f);
-    wait_us(5);
 }
 //PWM設定
 void write_pwm_mtr(int no,float per)
@@ -49,8 +43,8 @@ void write_pwm_mtr(int no,float per)
 //PID制御用
 void pid_ctr_mtr(float per)
 {
-    if(per > 1.0) per = 1.0;
-    if(per < 0.0) per = 0.0;
+    if(per > 1.0f) per = 1.0f;
+    if(per < 0.0f) per = 0.0f;
     Mt1.write(1.0f);
     Mt2.write(1.0f-per);
 }
@@ -93,10 +87,11 @@ void motor_pid(void)
     int pre_cnt,old_cnt;
     float en,ep,ei,ed;
 
-    getcnt_enc(&pre_cnt,&old_cnt);
+    //getcnt_enc(&pre_cnt,&old_cnt);
     //角速度の計算[rad/s]
-    pre_omega = pre_cnt*(((2.0f*PI)/1024.0f)/0.01f);
-    setcnt_enc(0);
+    //pre_omega = pre_cnt*(((2.0f*PI)/1024.0f)/0.01f);
+    pre_omega = mesu_rot_speed();
+    reset_enc_cnt();
     //偏差:目標値3.14[rad/s]
     en = (mtr_spd) - pre_omega;  
     //en = 20.0 - pre_omega;
@@ -116,10 +111,7 @@ void motor_pid(void)
     en2 = en1;
     en1 = en;
 }
-//角速度を取得
-float get_speed(){
-    return pre_omega;
-}
+//デューティ比率（操作値）
 float read_ratio(){
     return ratio;
 }

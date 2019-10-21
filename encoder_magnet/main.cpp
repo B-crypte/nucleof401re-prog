@@ -21,9 +21,10 @@ unsigned char current;   //記憶値
 void motor_tgl(void){
     if(readstate_mtr(1)==1.0){
         start_mtr();
+        //write_pwm_mtr(1,0.5);
     }else{
         stop_mtr();   //停止
-        write_pwm_mtr(1,1.0);
+        //write_pwm_mtr(1,1.0);
     }
 }
 
@@ -41,6 +42,7 @@ int main(){
     //モータ制御確認
     b1.rise(&motor_tgl);
     //roop
+    printf("\e[2j");
     while (1) {
         getcnt_enc(&cnt,&buf);
         dir = read_rot_dir();
