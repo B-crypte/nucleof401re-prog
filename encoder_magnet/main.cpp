@@ -30,9 +30,10 @@ void motor_tgl(void){
 
 //main func.
 int main(){
-    int buf;
-    float rpm;
-    float interval;
+    int buf,i;
+    float rpm_ave;
+    float rpm_total;
+    float interval_ave;
     float prirpm;
     float rto;
 
@@ -42,15 +43,23 @@ int main(){
     //モータ制御確認
     b1.rise(&motor_tgl);
     //roop
-    printf("\e[2j");
+    i = 0;
     while (1) {
         getcnt_enc(&cnt,&buf);
         dir = read_rot_dir();
-        rpm = read_rot_spd();
         rto = read_ratio();
-        interval = read_rot_interval();
+        interval_ave = read_rot_interval();
+        if(i < 10){
+            rpm_total += read_rot_spd();
+            i++;
+        }else{
+            rpm_ave = rpm_total / 10.0f;
+            rpm_total = 0.0f;
+            i = 0;
+        }
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
-        printf("rpm:%4.2f,interval:%4.2f,dir:%2d\n",rpm,interval,dir); 
+        //RPM,INTERVALは10回測定後の平均値
+        printf("rpm_ave:%4.2f,interval_ave:%4.2f,dir:%2d\n",rpm_ave,interval_ave,dir); 
         printf("r:%.2lf cnt:%4d\n\e[3A",rto,cnt);
     }
 }

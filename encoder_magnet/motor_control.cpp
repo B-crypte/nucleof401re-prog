@@ -11,7 +11,7 @@ static float en2 = 0;
 static float MVn = 0;
 static float pre_omega = 0.0;
 static float ratio = 0;
-static float mtr_spd = 3.12*2*10; //[rad/s]
+static float mtr_spd;    //[rad/s]
 
 //初期化
 void init_mtr(void)
@@ -25,6 +25,7 @@ void init_mtr(void)
     Mt2.write(1);
     Mt1.period_ms(1);
     Mt2.period_ms(1);
+    set_goal_rpm(600.0f);
 }
 //PWM設定
 void write_pwm_mtr(int no,float per)
@@ -74,6 +75,10 @@ void stop_mtr()
 void change_spd(float set_spd)
 {
     mtr_spd = set_spd;
+}
+//RPMから角周波数[rad/s]を求め，目標値にセットする
+void set_goal_rpm(float s_rpm){
+    mtr_spd = 2.0f * PI * (s_rpm/60.0f);
 }
 void ctr_spd(float add)
 {

@@ -25,3 +25,5 @@ float get_speed();
 void change_spd(float set_spd);
 void ctr_spd(float add);
 float read_ratio();
+//RPMから角周波数[rad/s]を求め，目標値にセットする
+void set_goal_rpm(float s_rpm);
