@@ -44,6 +44,7 @@ int main(){
     b1.rise(&motor_tgl);
     //roop
     i = 0;
+    printf("\n\n");
     while (1) {
         getcnt_enc(&cnt,&buf);
         dir = read_rot_dir();
@@ -60,6 +61,7 @@ int main(){
         printf("MagInc:%d,MagDec:%d\n",(bool)MagINC,(bool)MagDEC);
         //RPM,INTERVALは10回測定後の平均値
         printf("rpm_ave:%4.2f,interval_ave:%4.2f,dir:%2d\n",rpm_ave,interval_ave,dir); 
+        //pid_value_disp();
         printf("r:%.2lf cnt:%4d\n\e[3A",rto,cnt);
     }
 }

@@ -1,10 +1,12 @@
 #pragma once
 
 //pidパラメータ
-#define Kp (float)1.0
-#define Ti (float)0.06
-#define Td (float)0.012
-#define dT 0.01   //PID制御　タイマ割り込み時間
+#define Kp 0.8f     //比例
+#define Ki 0.5f
+#define Kd 0.01f
+#define Ti 0.06f    //微分
+#define Td 0.0f     //積分
+#define dT 0.01f    //PID制御　タイマ割り込み時間
 
 //PIDによるモータ制御の設定（未完成）
 void motor_pid(void);
@@ -27,3 +29,8 @@ void ctr_spd(float add);
 float read_ratio();
 //RPMから角周波数[rad/s]を求め，目標値にセットする
 void set_goal_rpm(float s_rpm);
+//第一引数が範囲内を超えないように調整する関数
+float limit(float target,float min,float max);
+float pid(float xin, float kp, float ki, float kd, float* work,float dt);
+void spd_ctr_pid();
+void pid_value_disp();
