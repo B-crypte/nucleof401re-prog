@@ -5,7 +5,7 @@
 InterruptIn Ena(D9,PullUp);   //quadrature A phase
 InterruptIn Enb(D8,PullUp);   //quadrature B phase
 
-InterruptIn Index_w(D7,PullUp); //m1,m2:absolute zero pos.,m3:W sign
+InterruptIn Index_w(D7); //m1,m2:absolute zero pos.,m3:W sign
 Ticker Mesu_encoder;
 Timer rot_t1;
 

@@ -85,15 +85,15 @@ void ctr_spd(float add){
 //モータの角速度制御
 void motor_pid(void){
     float en,ep,ei,ed;      //各偏差
-    float rate_reduction = 114.7f;             //減速比
-    float max_spd = 22800.0f*2.0f*PI/60.0f;    //PWMレートが最高速度で1.0になるようにする
+    float rate_reduction = 38.2f;   //減速比
+    float max_spd = 20000.0f;       //PWMレートが最高速度で1.0になるようにする
 
     //関数呼び出し：角速度の計算[rad/s]
-    current_spd = -mesu_rot_speed();
+    current_spd = mesu_rot_speed();
     reset_enc_cnt();
-    //偏差=目標値-現在の角速度
+    //偏差=目標値[rpm]-現在速度[rad/s→rpm]
     en = goal_spd - (current_spd*60.0f/(2.0f*PI));
-    en *= rate_reduction;
+    en *= rate_reduction; //軸の回転数[rpm*減衰比]
     //PID制御による制御量の決定
     ep = en - en1;
     ei = dT * (en+en1)/2.0f;
@@ -102,13 +102,13 @@ void motor_pid(void){
     MVn += Kp * (ep + (ei/Ti)+Td*ed);
     //MVn = Kp * (ep + ei/Ti);
     //PWMの比率で結果を反映(最大角速度：-[rad/s])
-    //mt=15000rpm,減速比114.7
     pwm_rate = MVn/max_spd;
     pwm_rate = limit(pwm_rate,0.0f,1.0f);
     pid_ctr_mtr(pwm_rate);
     //偏差を記録
     en2 = en1;
     en1 = en;
+    //デバッグ用
     x[0]=en;
     x[1]=ep;
     x[2]=ei;
@@ -118,14 +118,14 @@ void motor_pid(void){
 }
 //PID制御関数(不安定になる)
 void spd_ctr_pid(){
-    float rate_reduction = 114.7f;             //減速比
-    float max_spd = 22800.0f*2.0f*PI/60.0f;    //PWMレートが最高速度で1.0になるようにする
+    float rate_reduction = 38.2f;    //減速比
+    float max_spd = 17800.0f;        //PWMレートが最高速度で1.0になるようにする
 
-    x[6]=-mesu_rot_speed();  //現在速度[rad/s]
+    x[6]=mesu_rot_speed();  //現在速度[rad/s]
     reset_enc_cnt();        //カウンタリセット
     c=x[6]*60.0f/(2.0f*PI); //rad/s→rpmに変換
-    x[0]=goal_spd*60.0f/(2.0f*PI);      //目標値設定
-    x[1]=x[0]-c;                        //偏差
+    x[0]=goal_spd;      //目標値設定
+    x[1]=x[0]-c;        //偏差
     x[2]=pid(x[1],Kp,Ki,Kd,work1,dT);   //pid
     x[3]=x[2]*rate_reduction;
     x[4]=x[3]/max_spd;                  //rpm→pwm rate
